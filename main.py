@@ -100,6 +100,7 @@ def call_save_inputs():
             password_entry.delete(0, END)
             save_data = pandas.DataFrame(saved_dict, index=[0])
             save_data.to_csv(sep="|", path_or_buf="passwords.csv", mode="a", index=False, header=False)
+            messagebox.showinfo(message="Password added")
 
 
 # buttons
