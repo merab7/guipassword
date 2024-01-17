@@ -3,6 +3,7 @@ from tkinter import messagebox  # it is not included in asterix because it is no
 import pandas
 from random import choice, randint, shuffle
 import pyperclip
+import json
 
 # password generator
 
@@ -31,10 +32,10 @@ logo_canvas.grid(row=0, column=1)
 website_label = Label(text="Website :")
 website_label.grid(row=1, column=0)
 # entry
-website_entry = Entry(width=52)
+website_entry = Entry(width=32)
 
 website_entry.focus()
-website_entry.grid(row=1, column=1, columnspan=2)
+website_entry.grid(row=1, column=1, columnspan=1)
 
 # email
 # label
@@ -51,12 +52,12 @@ email_entry.grid(row=2, column=1, columnspan=2)
 password_label = Label(text="Password :")
 password_label.grid(row=3, column=0)
 # entry
-password_entry = Entry(width=34)
+password_entry = Entry(width=32)
 user_password = password_entry.get()
 password_entry.grid(row=3, column=1)
 
+
 # user input dict
-saved_dict = {}
 
 
 def gen_password():
@@ -74,19 +75,19 @@ def gen_password():
 
 
 # save_inputs
-def save_inputs(u_email, u_site, u_password):
-    global saved_dict
-    saved_dict = {
-        "email": f"{u_email}",
-        "website": f"{u_site}",
-        "password": f"{u_password}"
-    }
 
 
-def call_save_inputs():
+def save_inputs():
     user_mail = email_entry.get()
     user_website = website_entry.get()
     getuser_password = password_entry.get()
+
+    new_data = {
+        user_website: {
+            "email": user_mail,
+            "password": getuser_password
+        }
+    }
 
     if len(user_mail) == 0 or len(getuser_password) == 0 or len(user_mail) == 0:
         messagebox.showinfo(title="!!!", message="Please do not leave eny field empty")
@@ -95,12 +96,41 @@ def call_save_inputs():
                                                                    f"\n{getuser_password}"
                                                                    f"\n Is it okay to save")
         if is_ok:
-            save_inputs(user_mail, user_website, getuser_password)
+            try:  # with these try except else chane I am trying to face errors when
+                # json file is not existing or is empty
+                with open("data.json", "r") as data_file:
+                    data = json.load(data_file)  # loading data
+                    data.update(new_data)  # updating data
+            except:
+                with open("data.json", "w") as data_file:
+                    json.dump(new_data, data_file, indent=True)  # dumping the  new_data to the existing empty file
+            else:
+                with open("data.json", "w") as data_file:
+                    json.dump(data, data_file, indent=4)  # dumping the loaded and updated data to the existing file
+
             website_entry.delete(0, END)
             password_entry.delete(0, END)
-            save_data = pandas.DataFrame(saved_dict, index=[0])
-            save_data.to_csv(sep="|", path_or_buf="passwords.csv", mode="a", index=False, header=False)
             messagebox.showinfo(message="Password added")
+
+
+def search():
+    user_website = website_entry.get()
+    try:
+        with open("data.json", "r") as data:
+            data_content = json.load(data)
+            print(data_content)
+            for key, item in data_content.items():
+                if key.lower() == user_website.lower():
+                    messagebox.showinfo(title="Your result", message=f"Website: {key}\nemail: {item['email']}"
+                                                                     f"\npassword: {item['password']}")
+                    break
+
+            else:
+                messagebox.showinfo(title="Error", message="Site was not found in data please check your input")
+    except:
+        messagebox.showinfo("Error", "Data is empty")
+
+
 
 
 # buttons
@@ -108,7 +138,11 @@ def call_save_inputs():
 generator_bt = Button(text="Generate Password", command=gen_password)
 generator_bt.grid(row=3, column=2)
 # add
-add_bt = Button(text="Add", width=45, command=call_save_inputs)
+add_bt = Button(text="Add", width=45, command=save_inputs)
 add_bt.grid(row=4, column=1, columnspan=2)
+
+# search
+search_bt = Button(text="Search", padx=2, pady=2, width=15, command=search)
+search_bt.grid(row=1, column=2)
 
 window.mainloop()
